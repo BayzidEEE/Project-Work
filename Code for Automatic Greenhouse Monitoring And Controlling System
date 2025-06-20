@@ -1,0 +1,67 @@
+#include <DHT.h>
+
+// Pin Definitions 
+#define DHTPIN  4        // DHT11 signal pin
+#define DHTTYPE DHT11
+#define MQ9_PIN 34       // Analog pin for MQ9
+#define SOIL_PIN 35      // Analog pin for Soil Moisture
+#define LDR_PIN  32      // Analog pin for LDR
+
+#define RELAY_FAN     14
+#define RELAY_PUMP    27
+#define RELAY_LIGHT   26
+
+DHT dht(DHTPIN, DHTTYPE);
+
+void setup() {
+  Serial.begin(115200);
+  dht.begin();
+
+  // Relay output pins
+  pinMode(RELAY_FAN, OUTPUT);
+  pinMode(RELAY_PUMP, OUTPUT);
+  pinMode(RELAY_LIGHT, OUTPUT);
+
+  digitalWrite(RELAY_FAN, HIGH);    // Relays are active LOW
+  digitalWrite(RELAY_PUMP, HIGH);
+  digitalWrite(RELAY_LIGHT, HIGH);
+}
+
+void loop() {
+  //Read Sensors 
+  float temp = dht.readTemperature();
+  float hum = dht.readHumidity();
+  int gas = analogRead(MQ9_PIN);
+  int soil = analogRead(SOIL_PIN);
+  int light = analogRead(LDR_PIN);
+
+  // Debug Print
+  Serial.print("Temp: "); Serial.print(temp); Serial.print(" °C, ");
+  Serial.print("Humidity: "); Serial.print(hum); Serial.print(" %, ");
+  Serial.print("Gas: "); Serial.print(gas); Serial.print(", ");
+  Serial.print("Soil: "); Serial.print(soil); Serial.print(", ");
+  Serial.print("Light: "); Serial.println(light);
+
+  // Control Fan 
+  if (temp > 30 || hum > 75 || gas > 3000) {
+    digitalWrite(RELAY_FAN, LOW); // Turn ON
+  } else {
+    digitalWrite(RELAY_FAN, HIGH); // Turn OFF
+  }
+
+  // Control Water Pump 
+  if (soil < 1500) { // Adjust threshold based on your sensor
+    digitalWrite(RELAY_PUMP, LOW); // Turn ON
+  } else {
+    digitalWrite(RELAY_PUMP, HIGH); // Turn OFF
+  }
+
+  // Control Light 
+  if (light < 1000) {
+    digitalWrite(RELAY_LIGHT, LOW); // Turn ON
+  } else {
+    digitalWrite(RELAY_LIGHT, HIGH); // Turn OFF
+  }
+
+  delay(2000); // Wait 2 seconds
+}
